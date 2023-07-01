@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import  user_passes_test
 from .forms import GroupForm
 from .models import Group, Post
+from django.contrib.auth.forms import UserCreationForm
 
 def index(request):
     latest = list(Post.objects.select_related('author').values('author', 'author_id', 'id', 'pub_date', 'text').order_by("-pub_date")[:11])
@@ -11,6 +12,16 @@ def group_posts(request, slug):
     group = get_object_or_404(Group, slug = slug)
     posts = Post.objects.filter(group=group).order_by('-pub_date')[:12]
     return render(request, 'group.html', {'group': group, 'posts': posts})
+
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('index')
+    else:
+        form = UserCreationForm()
+    return render(request, 'registration/registration.html', {'form': form})
 
 def is_admin(user):
     return user.is_authenticated and user.is_superuser
