@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% block content %}
+<main role="main" class="container">
+    <div class="row">
+        <div class="col-md-3 mb-3 mt-1">
+            <div class="card">
+                <div class="card-body">
+                    <div class="h2">
+                        <!-- Имя автора -->
+                        {{ post.author.get_full_name }}
+                    </div>
+                    <div class="h3 text-muted">
+                        <!-- username автора -->
+                        @{{ post.author.username }}
+                    </div>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <div class="h6 text-muted">
+                            Подписчиков: {{ post.author.followers.count }} <br />
+                            Подписан: {{ post.author.following.count }}
+                        </div>
+                    </li>
+                    <li class="list-group-item">
+                        <div class="h6 text-muted">
+                            <!-- Количество записей автора -->
+                            Записей: {{ post.author.posts.count }}
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <!-- Пост -->
+            <div class="card mb-3 mt-1 shadow-sm">
+                <div class="card-body">
+                    <p class="card-text">
+                        <!-- Ссылка на страницу автора в атрибуте href; username автора в тексте ссылки -->
+                        <a href="{% url 'profile' username=post.author.username %}">
+                            <strong class="d-block text-gray-dark">@{{ post.author.username }}</strong>
+                        </a>
+                        <!-- Текст поста -->
+                        {{ post.text }}
+                    </p>
+                    {% if post.group %}
+                        <p>Group: <a href="{% url 'group_posts' slug=post.group.slug %}">{{ post.group.title }}</a></p>
+                    {% endif %}
+                </div>
+                {% if post.image %}
+                    {% load thumbnail %}
+                    {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
+                        <img class="card-img" src="{{ im.url }}">
+                    {% endthumbnail %}
+                {% endif %}
+                <div class="card-body">
+                    <!-- Дата публикации -->
+                    <small class="text-muted">{{ post.pub_date|date:"d F Y H:i" }}</small>
+                </div>
+            </div>
+
+            <!-- Отображение комментариев -->
+            {% for comment in comments %}
+                <div class="media mb-4">
+                    <div class="media-body">
+                        <h5 class="mt-0">{{ comment.author.username }}</h5>
+                        {{ comment.text }}
+                    </div>
+                </div>
+            {% endfor %}
+
+            <!-- Форма добавления комментария -->
+            {% if user.is_authenticated %}
+                <div class="card my-4">
+                    <form action="{% url 'add_comment' post.author.username post.id %}" method="post">
+                        {% csrf_token %}
+                        <h5 class="card-header">Добавить комментарий:</h5>
+                        <div class="card-body">
+                            {{ form.text|add_class:"form-control" }}
+                            <button type="submit" class="btn btn-primary">Отправить</button>
+                        </div>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</main>
+{% endblock %}

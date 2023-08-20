@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load thumbnail %}
+
+{% block content %}
+<main role="main" class="container">
+    <div class="row">
+        <div class="col-md-3 mb-3 mt-1">
+            <div class="card">
+                <div class="card-body">
+                    <div class="h2">
+                        <!-- Имя автора -->
+                        {{ user.get_full_name }}
+                    </div>
+                    <div class="h3 text-muted">
+                        {{ user.username }}
+                    </div>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <div class="h6 text-muted">
+                            Подписчиков: {{ followers_count }} <br />
+                            Подписан: {{ following_count }}
+                        </div>
+                    </li>
+                    <li class="list-group-item">
+                        <div class="h6 text-muted">
+                            <!-- Количество записей -->
+                            Записей: {{ posts_count }}
+                        </div>
+                    </li>
+                    <li class="list-group-item">
+                        {% if user.is_authenticated %}
+                            {% if following %}
+                            <a class="btn btn-lg btn-light" href="{% url 'profile_unfollow' user.username %}" role="button"> 
+                                Отписаться 
+                            </a>                            
+                            {% else %}
+                            <a class="btn btn-lg btn-primary" href="{% url 'profile_follow' user.username %}" role="button">
+                                Подписаться
+                            </a>                            
+                            {% endif %}
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <!-- Начало блока с отдельным постом --> 
+            {% for post in posts %}
+                <div class="card mb-3 mt-1 shadow-sm">
+                    <div class="card-body">
+                        <a href="{% url 'profile' username=post.author.username %}">
+                            <strong class="d-block text-gray-dark">@{{ post.author.username }}</strong>
+                        </a>
+                        <p class="card-text post-text">
+                            {{ post.text }}
+                        </p>
+                        <!-- Добавление изображения, если оно есть -->
+                        {% if post.image %}
+                            {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
+                                <img class="card-img" src="{{ im.url }}">
+                            {% endthumbnail %}
+                        {% endif %}
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="btn-group">
+                                <!-- Ссылка на страницу записи в атрибуте href -->
+                                <a class="btn btn-sm text-muted" href="{% url 'post_detail' username=post.author.username post_id=post.id %}" role="button">Добавить комментарий</a>
+                                <!-- Ссылка на редактирование, показывается только автору записи -->
+                                {% if user == post.author %}
+                                    <a class="btn btn-sm text-muted" href="{% url 'post_edit' username=post.author.username post_id=post.id %}" role="button">Редактировать</a>
+                                {% endif %}
+                            </div>
+                            <!-- Дата публикации -->
+                            <small class="text-muted">{{ post.pub_date|date:"d F Y H:i" }}</small>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            <!-- Конец блока с отдельным постом -->
+            
+            <!-- Остальные посты -->
+            {% if posts.has_other_pages %}
+                {% include "paginator.html" with items=posts paginator=posts.paginator %}
+            {% endif %}
+        </div>
+    </div>
+</main>
+{% endblock %}
